@@ -86,6 +86,7 @@ export interface Order {
   thana: string;
   address: string;
   note: string | null;
+  ipAddress: string | null;
 
   isInsideDhaka: boolean;
   shippingFee: number;

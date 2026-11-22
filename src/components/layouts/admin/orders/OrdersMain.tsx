@@ -20,6 +20,7 @@ const ITEMS_PER_PAGE = 10;
 
 const OrdersMain = () => {
   const [orders, setOrders] = useState<Order[]>([]);
+  console.log(orders);
   const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState('');

@@ -3,23 +3,15 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
 import {
   LayoutDashboard,
-  Package,
   ShoppingCart,
-  Users,
-  User,
   LogOut,
   MessageSquare,
   ChartNoAxesCombined,
-  UserStar,
-  NotebookPen,
-  ChevronDown,
   HomeIcon,
+  GlobeOff,
 } from 'lucide-react';
-import { BiSolidCategory } from 'react-icons/bi';
-import Image from 'next/image';
 import {
   Building2,
   UserRound,
@@ -56,6 +48,11 @@ const AdminSidebar = ({
       name: 'Analytics',
       href: '/admin/analytics',
       icon: ChartNoAxesCombined,
+    },
+    {
+      name: 'Blocked Customers',
+      href: '/admin/blocked-customers',
+      icon: GlobeOff,
     },
     // {
     //   name: 'Hero Management',

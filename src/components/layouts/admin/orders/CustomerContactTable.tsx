@@ -103,7 +103,7 @@ const CustomerContactTable = ({
 
                 <th className="px-4 py-3 text-left">Phone</th>
 
-                <th className="px-4 py-3 text-left">Email</th>
+                <th className="px-4 py-3 text-left">Ip Address</th>
 
                 <th className="px-4 py-3 text-left">Address</th>
 
@@ -189,7 +189,7 @@ const CustomerContactTable = ({
                     {/* EMAIL */}
                     <td className="px-4 py-4">
                       <span className="block max-w-[200px] truncate">
-                        {order.user?.email || '-'}
+                        {order.ipAddress || '-'}
                       </span>
                     </td>
 

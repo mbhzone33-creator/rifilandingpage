@@ -25,28 +25,29 @@ interface PageProps {
 
 interface OrderItem {
   id: string;
-  productId: string;
+  productId: string | null;
   name: string;
   price: number;
   quantity: number;
-  category: string;
-  size?: string;
-  color?: string;
-  product: {
-    thumbnail: string;
+  category?: string;
+  size?: string | null;
+  color?: string | null;
+
+  product?: {
+    thumbnail?: string | null;
     category?: string;
     brand?: string;
     variant?: string;
-    specialPrice?: number;
-    price: number;
-  };
+    specialPrice?: number | null;
+    price?: number;
+  } | null;
 }
 
 interface Order {
   id: string;
-  userId?: string;
+  userId?: string | null;
   total: number;
-  totalAmount: number;
+  totalAmount?: number;
   status: string;
   name: string;
   phone: string;
@@ -61,6 +62,10 @@ interface Order {
 }
 
 const API_URL = process.env.NEXT_PUBLIC_BASE_API;
+
+// ============================================
+// GET SINGLE ORDER
+// ============================================
 
 const getSingleOrder = async (orderId: string): Promise<Order | null> => {
   try {
@@ -79,6 +84,10 @@ const getSingleOrder = async (orderId: string): Promise<Order | null> => {
     return null;
   }
 };
+
+// ============================================
+// EMPTY ORDER STATE
+// ============================================
 
 const EmptyOrderState = ({
   title,
@@ -110,6 +119,10 @@ const EmptyOrderState = ({
   );
 };
 
+// ============================================
+// THANK YOU PAGE
+// ============================================
+
 const ThankYouPage = async ({ searchParams }: PageProps) => {
   const { orderId } = await searchParams;
 
@@ -133,33 +146,46 @@ const ThankYouPage = async ({ searchParams }: PageProps) => {
     );
   }
 
-  console.log(order);
+  // ============================================
+  // ORDER CALCULATIONS
+  // ============================================
 
   const formattedDate = new Date(order.createdAt).toLocaleString('en-BD', {
     dateStyle: 'medium',
     timeStyle: 'short',
   });
 
+  const productTotal = order.totalAmount ?? order.total - order.shippingFee;
+
+  // ============================================
+  // PURCHASE EVENT ITEMS
+  // ============================================
+
+  const purchaseItems = order.items.map(item => ({
+    productId: item.productId || item.id,
+    name: item.name,
+    price: Number(item.price),
+    quantity: Number(item.quantity),
+
+    category: item.product?.category || item.category || '',
+
+    brand: item.product?.brand || '',
+
+    variant: `${item.size || ''} ${item.color || ''}`.trim(),
+
+    size: item.size || '',
+    color: item.color || '',
+  }));
+
   return (
     <main className="min-h-screen bg-slate-50 py-8 sm:py-12">
+      {/* PURCHASE EVENT */}
+
       <PurchaseEvent
         transactionId={order.id}
         value={Number(order.total)}
         shipping={Number(order.shippingFee)}
-        items={order.items.map(item => ({
-          productId: item.productId,
-          name: item.name,
-          price: Number(item.price),
-          quantity: Number(item.quantity),
-          category:
-            typeof item.product.category === 'string'
-              ? item.product.category
-              : '',
-          brand: item.product.brand || '',
-          variant: `${item.size || ''} ${item.color || ''}`.trim(),
-          size: item.size || '',
-          color: item.color || '',
-        }))}
+        items={purchaseItems}
         customer={{
           first_name: order.name,
           phone: order.phone,
@@ -168,7 +194,10 @@ const ThankYouPage = async ({ searchParams }: PageProps) => {
       />
 
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
+        {/* ============================================ */}
         {/* SUCCESS */}
+        {/* ============================================ */}
+
         <div className="mb-8 text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50">
             <CheckCircle2 className="h-8 w-8 text-emerald-600" />
@@ -184,12 +213,16 @@ const ThankYouPage = async ({ searchParams }: PageProps) => {
           </p>
         </div>
 
+        {/* ============================================ */}
         {/* MAIN ORDER CARD */}
+        {/* ============================================ */}
+
         <div
           id="order-receipt"
           className="overflow-hidden rounded-sm border border-slate-200 bg-white shadow-sm"
         >
           {/* ORDER HEADER */}
+
           <div className="border-b border-slate-200 px-5 py-5 sm:px-7">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -216,9 +249,13 @@ const ThankYouPage = async ({ searchParams }: PageProps) => {
             </div>
           </div>
 
+          {/* ============================================ */}
           {/* CUSTOMER / DELIVERY */}
+          {/* ============================================ */}
+
           <div className="grid border-b border-slate-200 sm:grid-cols-2">
             {/* CUSTOMER */}
+
             <div className="border-b border-slate-200 p-5 sm:border-b-0 sm:border-r sm:p-7">
               <div className="mb-4 flex items-center gap-2">
                 <User className="h-4 w-4 text-slate-400" />
@@ -239,6 +276,7 @@ const ThankYouPage = async ({ searchParams }: PageProps) => {
             </div>
 
             {/* DELIVERY */}
+
             <div className="p-5 sm:p-7">
               <div className="mb-4 flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-slate-400" />
@@ -266,7 +304,10 @@ const ThankYouPage = async ({ searchParams }: PageProps) => {
             </div>
           </div>
 
+          {/* ============================================ */}
           {/* PRODUCTS */}
+          {/* ============================================ */}
+
           <div className="px-5 py-6 sm:px-7 sm:py-7">
             <div className="mb-5 flex items-center justify-between">
               <h2 className="text-sm font-bold text-slate-900">
@@ -279,59 +320,73 @@ const ThankYouPage = async ({ searchParams }: PageProps) => {
             </div>
 
             <div className="divide-y divide-slate-100">
-              {order.items.map(item => (
-                <div
-                  key={item.id}
-                  className="flex gap-4 py-4 first:pt-0 last:pb-0"
-                >
-                  {/* IMAGE */}
-                  <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-slate-100 bg-slate-50 sm:h-20 sm:w-20">
-                    <Image
-                      src={item.product.thumbnail}
-                      alt={item.name}
-                      fill
-                      sizes="80px"
-                      className="object-contain p-1"
-                    />
-                  </div>
+              {order.items.map(item => {
+                // Safe product access
 
-                  {/* INFO */}
-                  <div className="min-w-0 flex-1">
-                    <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-slate-900">
-                      {item.name}
-                    </h3>
+                const product = item.product;
 
-                    <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
-                      <span>
-                        ৳
-                        {(
-                          item.product.specialPrice ?? item.product.price
-                        ).toLocaleString()}
-                        × {item.quantity}
-                      </span>
+                // Use order item price as the fallback
 
-                      {item.size && <span>Size: {item.size}</span>}
+                const unitPrice = Number(product?.specialPrice ?? item.price);
 
-                      {item.color && <span>Color: {item.color}</span>}
+                const itemTotal = unitPrice * Number(item.quantity);
+
+                return (
+                  <div
+                    key={item.id}
+                    className="flex gap-4 py-4 first:pt-0 last:pb-0"
+                  >
+                    {/* IMAGE */}
+
+                    <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-100 bg-slate-50 sm:h-20 sm:w-20">
+                      {product?.thumbnail ? (
+                        <Image
+                          src={product.thumbnail}
+                          alt={item.name}
+                          fill
+                          sizes="80px"
+                          className="object-contain p-1"
+                        />
+                      ) : (
+                        <Package className="h-7 w-7 text-slate-300" />
+                      )}
+                    </div>
+
+                    {/* INFO */}
+
+                    <div className="min-w-0 flex-1">
+                      <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-slate-900">
+                        {item.name}
+                      </h3>
+
+                      <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
+                        <span>
+                          ৳{unitPrice.toLocaleString('en-BD')} × {item.quantity}
+                        </span>
+
+                        {item.size && <span>Size: {item.size}</span>}
+
+                        {item.color && <span>Color: {item.color}</span>}
+                      </div>
+                    </div>
+
+                    {/* PRICE */}
+
+                    <div className="shrink-0 text-right">
+                      <p className="text-sm font-bold text-slate-900 sm:text-base">
+                        ৳{itemTotal.toLocaleString('en-BD')}
+                      </p>
                     </div>
                   </div>
-
-                  {/* PRICE */}
-                  <div className="shrink-0 text-right">
-                    <p className="text-sm font-bold text-slate-900 sm:text-base">
-                      ৳
-                      {(
-                        item.product.specialPrice ??
-                        item.product.price * item.quantity
-                      ).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
+          {/* ============================================ */}
           {/* NOTE */}
+          {/* ============================================ */}
+
           {order.note && (
             <div className="mx-5 mb-6 border-l-2 border-slate-300 bg-slate-50 px-4 py-3 sm:mx-7">
               <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
@@ -345,24 +400,33 @@ const ThankYouPage = async ({ searchParams }: PageProps) => {
             </div>
           )}
 
+          {/* ============================================ */}
           {/* SUMMARY */}
+          {/* ============================================ */}
+
           <div className="border-t border-slate-200 bg-slate-50/70 px-5 py-6 sm:px-7">
             <div className="ml-auto max-w-sm space-y-3">
+              {/* PRODUCT TOTAL */}
+
               <div className="flex justify-between text-sm text-slate-500">
                 <span>পণ্যের মূল্য</span>
 
                 <span className="font-medium text-slate-700">
-                  ৳{order.totalAmount}
+                  ৳{productTotal.toLocaleString('en-BD')}
                 </span>
               </div>
+
+              {/* SHIPPING */}
 
               <div className="flex justify-between text-sm text-slate-500">
                 <span>ডেলিভারি চার্জ</span>
 
                 <span className="font-medium text-slate-700">
-                  ৳{order.shippingFee.toLocaleString()}
+                  ৳{order.shippingFee.toLocaleString('en-BD')}
                 </span>
               </div>
+
+              {/* GRAND TOTAL */}
 
               <div className="border-t border-slate-200 pt-4">
                 <div className="flex items-center justify-between">
@@ -371,21 +435,27 @@ const ThankYouPage = async ({ searchParams }: PageProps) => {
                   </span>
 
                   <span className="text-2xl font-extrabold tracking-tight text-primary">
-                    ৳{order.total.toLocaleString()}
+                    ৳{order.total.toLocaleString('en-BD')}
                   </span>
                 </div>
               </div>
             </div>
           </div>
 
+          {/* ============================================ */}
           {/* TRUST */}
+          {/* ============================================ */}
+
           <div className="flex items-center justify-center gap-2 border-t border-slate-200 px-5 py-4 text-xs text-slate-500">
             <ShieldCheck className="h-4 w-4 text-emerald-600" />
             আপনার অর্ডারটি নিরাপদে সংরক্ষিত হয়েছে
           </div>
         </div>
 
+        {/* ============================================ */}
         {/* ACTIONS */}
+        {/* ============================================ */}
+
         <div className="mt-6 flex flex-col items-center gap-4 print:hidden">
           <DownloadOrderButton />
 
