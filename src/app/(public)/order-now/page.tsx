@@ -20,7 +20,7 @@ const OrderNowPage = () => {
     );
   }
 
-  return <BuyNow product={product} />;
+  return <BuyNow />;
 };
 
 export default OrderNowPage;
